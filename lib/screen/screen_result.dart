@@ -7,6 +7,7 @@ class ResultScreen extends StatelessWidget {
   List<Quiz> quizs;
   ResultScreen({this.answers, this.quizs});
 
+  @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
     double width = screenSize.width;
@@ -18,12 +19,13 @@ class ResultScreen extends StatelessWidget {
         score += 1;
       }
     }
-    return WillPopScope(
-      onWillPop: () async => false, //자동 스와이프 막기
 
-      child: Scaffold(
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: SafeArea(
+        child: Scaffold(
           appBar: AppBar(
-            title: Text('My quiz app'),
+            title: Text('My Quiz APP'),
             backgroundColor: Colors.deepPurple,
             leading: Container(),
           ),
@@ -109,11 +111,13 @@ class ResultScreen extends StatelessWidget {
                         textColor: Colors.black,
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
-          )),
+          ),
+        ),
+      ),
     );
   }
 }

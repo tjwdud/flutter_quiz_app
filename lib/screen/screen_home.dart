@@ -1,13 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:quiz_app_test/model/api_adapter.dart';
 import 'package:quiz_app_test/model/model_quiz.dart';
 import 'package:quiz_app_test/screen/screen_quiz.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Quiz> quizs = [
+  //로딩키
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  List<Quiz> quizs = [];
+  //데이터 로딩 상태에 대한 정보를 담을 isLoading 변수 선언
+  bool isLoading = false;
+
+  _fetchQuizs() async {
+    setState(() {
+      isLoading = true;
+    });
+    final response =
+        await http.get('https://drf-quiz-test1.herokuapp.com/quiz/3/');
+    //상태코드가 200이면 setState 로 quizs를 업데이트 하고 isLoding을 을 변경해준다
+    if (response.statusCode == 200) {
+      setState(() {
+        quizs = parseQuizs(utf8.decode(response.bodyBytes));
+        isLoading = false;
+      });
+    } else {
+      throw Exception('failed to load data');
+    }
+  }
+
+  /*List<Quiz> quizs = [
     Quiz.formMap({
       'title': 'test',
       'candidates': ['a', 'b', 'c', 'd'],
@@ -23,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'candidates': ['a', 'b', 'c', 'd'],
       'answer': 0
     }),
-  ];
+  ];*/
   Widget build(BuildContext context) {
     //기기의 여러가지 상태정보를 알 수 있다.
     Size screenSize = MediaQuery.of(context).size;
@@ -36,6 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
+          //로딩키
+          key: _scaffoldKey,
           appBar: AppBar(
             title: Text('My Quiz'),
             backgroundColor: Colors.deepPurple,
@@ -90,12 +119,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       color: Colors.deepPurple,
                       onPressed: () {
-                        Navigator.push(
+                        _scaffoldKey.currentState.showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: <Widget>[
+                                CircularProgressIndicator(),
+                                Padding(
+                                  padding: EdgeInsets.only(left: width * 0.036),
+                                ),
+                                Text('로딩중')
+                              ],
+                            ),
+                          ),
+                        );
+                        _fetchQuizs().whenComplete(() {
+                          return Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => QuizScreen(
-                                      quizs: quizs,
-                                    )));
+                              builder: (context) => QuizScreen(
+                                quizs: quizs,
+                              ),
+                            ),
+                          );
+                        });
                       },
                     ),
                   ),
